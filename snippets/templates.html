@@ -1,0 +1,11 @@
+<template>
+    <p>This is template content</p>
+    <content select="h3">Header will be included here</content>
+    <content>Here will be inserted all other content</content>
+</template>
+
+<script>
+    var template = document.getElementById('my-template');
+    var clone = document.importNode(template.content, true);
+    shadowRoot.appendChild(clone);
+</script>

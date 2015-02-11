@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+
+    <style>
+    </style>
+
+    <link rel="import" href="components/myGauge.html"/>
+    <link rel="import" href="sensor/sensor.html"/>
+
+</head>
+<body>
+    <my-gauge id="gauge-1" width="300px" height="300px" value="30" max-value="100" color="teal"></my-gauge>
+    <my-generator id="api"></my-generator>
+    <!--<my-sensor-->
+            <!--id="api"-->
+            <!--app-id="95f296ad-1fbc-4161-9f7b-878a72425b18"-->
+            <!--token="3aBCW1MeKtSuF1AbhJLpwZzqoGr6oPF6"-->
+            <!--device-id="955f3904-355f-483e-aee3-a841c3eca8f1">-->
+    <!--</my-sensor>-->
+
+
+    <script>
+        (function () {
+            var gauge = document.getElementById('gauge-1');
+            var api = document.getElementById('api');
+
+            api.addEventListener('update', function (e) {
+                gauge.setValue(e.detail);
+//                gauge.setValue(e.detail['snd_level']);
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<script>
+    (function (window, document) {
+        /**
+         * This simple generator will emit random int every 1s
+         */
+        var myGeneratorPrototype = Object.create(HTMLElement.prototype);
+
+        var min = 0;
+        var max = 100;
+
+        myGeneratorPrototype.createdCallback = function () {
+            var self = this;
+            this.intervalID = window.setInterval(function () {
+                var e = new CustomEvent('update', {
+                    detail: Math.floor(Math.random() * (max - min)) + min
+                });
+                self.dispatchEvent(e);
+            }, 1000);
+        };
+
+        // We clean after our generator when it's removed from document
+        myGeneratorPrototype.detachedCallback = function () {
+            window.clearInterval(this.intervalID);
+        };
+
+
+        window.MyGenerator = document.registerElement('my-generator', {
+            prototype: myGeneratorPrototype
+        });
+    })(window, document);
+</script>

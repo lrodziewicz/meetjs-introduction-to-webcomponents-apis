@@ -1,0 +1,222 @@
+<template>
+    <style>
+        :host {
+            display: block;
+        }
+
+        text {
+            font-family: "Helvetica Neue Light", "HelveticaNeue-Light", "Helvetica Neue", Calibri, Helvetica, Arial;
+            font-size: 30px;
+        }
+    </style>
+    <svg width="" height="" id="gauge">
+        <circle id="back-circle" cx="" cy="" r="" fill="none" stroke="lightgrey" stroke-width=""></circle>
+        <path id="value" fill="none" stroke="" stroke-width="" />
+        <text id="value-text" x="" y="" text-anchor="middle" alignment-baseline="middle"></text>
+    </svg>
+    <content></content>
+</template>
+
+<script>
+    (function (window, document) {
+        "use strict";
+
+        // Two functions below found at http://stackoverflow.com/a/5737245
+
+        /**
+         *  Translate polar coordinates to cartesian
+         */
+        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+            var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+
+            return {
+                x: centerX + (radius * Math.cos(angleInRadians)),
+                y: centerY + (radius * Math.sin(angleInRadians))
+            };
+        }
+
+        /**
+         * Creates path data
+         * @see http://www.w3.org/TR/SVG/paths.html#PathData
+         */
+        function describeArc(x, y, radius, startAngle, endAngle){
+
+            var start = polarToCartesian(x, y, radius, endAngle);
+            var end = polarToCartesian(x, y, radius, startAngle);
+
+            var arcSweep = endAngle - startAngle <= 180 ? "0" : "1";
+
+            var d = [
+                "M", start.x, start.y,
+                "A", radius, radius, 0, arcSweep, 0, end.x, end.y
+            ].join(" ");
+
+            return d;
+        }
+
+        /**
+         * Converts dash convention to camel case.
+         * Found at http://stackoverflow.com/a/6661012
+         *
+         * @param string
+         * @returns {XML|string|void}
+         */
+        function dashToCamelCase (string) {
+            return string.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); })
+        }
+
+        // Gets the document of current file (not the root document)
+        // @see http://webcomponents.org/articles/introduction-to-html-imports/#window-and-document-object-in-an-imported-html
+        var thisDocument = document.currentScript.ownerDocument;
+
+        // Create a prototype for our component from HTMLElement because
+        // we need to inherit may properties and methods
+        var MyGaugePrototype = Object.create(HTMLElement.prototype);
+
+        // Define default values
+        MyGaugePrototype.defaults = {
+            width: 300,
+            height: 300,
+            value: 0,
+            maxValue: 100,
+            color: "firebrick",
+            strokeWidth: 50
+        };
+
+        var attributeNames = ['width', 'height', 'value', 'max-value', 'color', 'stroke-width'];
+        var attributes = {};
+
+        // Cache setters and property names according to our naming convention.
+        // It's not necessary but make code much more reusable
+        for (var i = 0; i < attributeNames.length; i++) {
+            var propertyName = dashToCamelCase(attributeNames[i]);
+            var setterName = 'set' + propertyName.charAt(0).toUpperCase() + propertyName.slice(1);
+
+            attributes[attributeNames[i]] = {
+                property: propertyName,
+                setter: setterName
+            };
+
+            // Initializing properties with defaults
+            MyGaugePrototype[propertyName] = MyGaugePrototype.defaults[propertyName];
+        }
+
+        // Callback called upon creating our element (but before it's attached to DOM)
+        MyGaugePrototype.createdCallback = function () {
+            // Creates a shadow root for element
+            // @see http://www.html5rocks.com/en/tutorials/webcomponents/shadowdom-301/
+            var shadowRoot = this.createShadowRoot();
+
+            // Get content of the template
+            var template = thisDocument.querySelector('template').content;
+
+            // Creates a copy of a node in context of current document
+            // @see https://developer.mozilla.org/en-US/docs/Web/API/document.importNode
+            var clone = thisDocument.importNode(template, true);
+            shadowRoot.appendChild(clone);
+
+            // Cache references to elements within our template
+            // that we are going to use frequently
+            this.els = {
+                svg: shadowRoot.getElementById('gauge'),
+                path: shadowRoot.getElementById('value'),
+                backCircle: shadowRoot.getElementById('back-circle'),
+                text: shadowRoot.getElementById('value-text')
+            };
+
+            // Block below is a basic version
+            // that were replaced with more reusable version
+/*
+            if (this.hasAttribute('width')) {
+                this.setWidth(this.getAttribute('width'));
+            }
+            else {
+                this.setWidth(this.width);
+            }
+ */
+            for (var attribute in attributes) {
+                if (this.hasAttribute(attribute)) {
+                    this[attributes[attribute]['setter']](this.getAttribute(attribute));
+                }
+                else {
+                    // Set to default (different from initialization)
+                    this[attributes[attribute]['setter']](this.defaults[attributes[attribute]['property']]);
+                }
+            }
+        };
+
+        // This callback is executed when attributes are changed/added
+        MyGaugePrototype.attributeChangedCallback = function (attrName, oldVal, newVal) {
+/*
+            if (attrName === 'width') {
+                if (newVal !== '') {
+                    this.setWidth(newVal);
+                }
+                else {
+                    this.setWidth(this.width);
+                }
+            }
+*/
+            for (var attribute in attributes) {
+                if (attribute === attrName) {
+                    if (newVal !== '') {
+                        this[attributes[attribute]['setter']](newVal);
+                    }
+                    else {
+                        // Restore default value
+                        this[attributes[attribute]['setter']](this.defaults[attributes[attribute]['property']]);
+                    }
+                    return;
+                }
+            }
+        };
+
+        MyGaugePrototype.setWidth = function (width) {
+            // Keep in mind that we skip checking ratio of width/height
+
+            this.width = parseInt(width, 10);
+            this.style.width = width;
+            this.els.svg.setAttribute('width', width);
+            this.els.backCircle.setAttribute('cx', this.width/2);
+            this.els.backCircle.setAttribute('r', (this.width - this.strokeWidth) / 2);
+            this.els.text.setAttribute('x', this.width/2);
+        };
+
+        MyGaugePrototype.setHeight = function (height) {
+            this.height = parseInt(height, 10);
+            this.style.height = height;
+            this.els.svg.setAttribute('height', height);
+            this.els.backCircle.setAttribute('cy', this.height/2);
+            this.els.text.setAttribute('y', this.height/2);
+        };
+
+        MyGaugePrototype.setMaxValue = function (maxValue) {
+            this.maxValue = maxValue;
+            this.els.path.setAttribute('d', describeArc(this.width/2, this.height/2, (this.width - this.strokeWidth) / 2, 0, this.value/this.maxValue * 360));
+        };
+
+        MyGaugePrototype.setValue = function (value) {
+            this.value = value;
+            this.els.path.setAttribute('d', describeArc(this.width/2, this.height/2, (this.width - this.strokeWidth) / 2, 0, this.value/this.maxValue * 360));
+            this.els.text.textContent = value;
+        };
+
+        MyGaugePrototype.setColor = function (color) {
+            this.color = color;
+            this.els.path.setAttribute('stroke', color);
+        };
+
+        MyGaugePrototype.setStrokeWidth = function (strokeWidth) {
+            this.strokeWidth = parseInt(strokeWidth, 10);
+            this.els.path.setAttribute('stroke-width', this.strokeWidth);
+            this.els.path.setAttribute('d', describeArc(this.width/2, this.height/2, (this.width - this.strokeWidth) / 2, 0, this.value/this.maxValue * 360));
+            this.els.backCircle.setAttribute('stroke-width', this.strokeWidth);
+            this.els.backCircle.setAttribute('r', (this.width - this.strokeWidth) / 2);
+        };
+
+        // Here we register our newly created element!
+        window.MyGauge = document.registerElement('my-gauge', {
+            prototype: MyGaugePrototype
+        });
+    })(window, document);
+</script>

@@ -1,0 +1,102 @@
+<template>
+    <svg width="300px" height="300px" id="gauge">
+        <circle cx="150" cy="150" r="125" fill="none" stroke="grey" stroke-width="50"></circle>
+        <path id="value" fill="none" stroke="red" stroke-width="50" />
+        <text id="value-text" x="150" y="150" text-anchor="middle"></text>
+    </svg>
+</template>
+
+<script>
+    (function (window, document) {
+        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+            var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+
+            return {
+                x: centerX + (radius * Math.cos(angleInRadians)),
+                y: centerY + (radius * Math.sin(angleInRadians))
+            };
+        }
+
+        function describeArc(x, y, radius, startAngle, endAngle) {
+
+            var start = polarToCartesian(x, y, radius, endAngle);
+            var end = polarToCartesian(x, y, radius, startAngle);
+
+            var arcSweep = endAngle - startAngle <= 180 ? "0" : "1";
+
+            var d = [
+                "M", start.x, start.y,
+                "A", radius, radius, 0, arcSweep, 0, end.x, end.y
+            ].join(" ");
+
+            return d;
+        }
+
+
+        var MyGaugePrototype = Object.create(HTMLElement.prototype);
+
+        MyGaugePrototype.width = 300;
+        MyGaugePrototype.height = 300;
+        MyGaugePrototype.value = 0;
+        MyGaugePrototype.maxValue = 100;
+        MyGaugePrototype.color = 'pink';
+        MyGaugePrototype.strokeWidth = 50;
+
+        var thisDocument = document.currentScript.ownerDocument;
+
+        MyGaugePrototype.createdCallback = function () {
+            var template = thisDocument.querySelector('template').content;
+            var clone = thisDocument.importNode(template, true);
+
+            var shadow = this.createShadowRoot();
+            shadow.appendChild(clone);
+
+            this.els = {
+                svg: shadow.getElementById('gauge'),
+                path: shadow.getElementById('value'),
+                text: shadow.getElementById('value-text')
+            };
+
+            if (this.hasAttribute('value')) {
+                this.setValue(this.getAttribute('value'))
+            }
+            else {
+                this.setValue(this.value);
+            }
+
+            if (this.hasAttribute('max-value')) {
+                this.setMaxValue(this.getAttribute('max-value'))
+            }
+
+            if (this.hasAttribute('color')) {
+                this.setColor(this.getAttribute('color'))
+            }
+        };
+
+        MyGaugePrototype.attributeChangedCallback = function (attrName, oldVal, newVal) {
+            if (attrName === 'value') {
+                this.setValue(newVal);
+            }
+        };
+
+        MyGaugePrototype.setValue = function (value) {
+            this.value = value;
+            this.els.path.setAttribute('d', describeArc(this.width/2, this.height/2, (this.width-this.strokeWidth)/2, 0, this.value/this.maxValue * 360));
+        };
+
+        MyGaugePrototype.setMaxValue = function (maxValue) {
+            this.maxValue = maxValue;
+            this.els.path.setAttribute('d', describeArc(this.width/2, this.height/2, (this.width-this.strokeWidth)/2, 0, this.value/this.maxValue * 360));
+        };
+
+        MyGaugePrototype.setColor = function (color) {
+            this.color = color;
+            this.els.path.setAttribute('stroke', this.color);
+        };
+
+        var MyGauge = document.registerElement('my-gauge', {
+            prototype: MyGaugePrototype
+        });
+
+    })(window, document);
+</script>

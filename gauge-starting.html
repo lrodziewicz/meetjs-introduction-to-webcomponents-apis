@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Meet.js Łódź - Introduction to WebComponents API's (2015-02-10)</title>
+</head>
+<body>
+    <!--
+        This is our starting point
+        based on http://stackoverflow.com/a/5737245
+    -->
+    <svg width="300px" height="300px" id="gauge">
+        <circle id="back-circle" cx="150" cy="150" r="125" fill="none" stroke="lightgrey" stroke-width="50"></circle>
+        <path id="value" fill="none" stroke="red" stroke-width="50" />
+        <text id="value-text" x="150" y="150" text-anchor="middle" alignment-baseline="middle"></text>
+    </svg>
+
+    <script>
+        (function () {
+            var maxValue = 100;
+            var currentValue = 75;
+            var unit = undefined;
+
+            function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+                var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+
+                return {
+                    x: centerX + (radius * Math.cos(angleInRadians)),
+                    y: centerY + (radius * Math.sin(angleInRadians))
+                };
+            }
+
+            function describeArc(x, y, radius, startAngle, endAngle) {
+
+                var start = polarToCartesian(x, y, radius, endAngle);
+                var end = polarToCartesian(x, y, radius, startAngle);
+
+                var arcSweep = endAngle - startAngle <= 180 ? "0" : "1";
+
+                var d = [
+                    "M", start.x, start.y,
+                    "A", radius, radius, 0, arcSweep, 0, end.x, end.y
+                ].join(" ");
+
+                return d;
+            }
+
+            var gauge = document.getElementById('value');
+            gauge.setAttribute('d', describeArc(150, 150, (300-50)/2, 0, currentValue/maxValue * 360));
+            var gaugeText = document.getElementById('value-text');
+            gaugeText.textContent = unit ? currentValue + ' ' + unit : currentValue;
+        })();
+    </script>
+</body>
+</html>

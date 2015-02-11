@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Meet.js Łódź - Introduction to WebComponents API's (2015-02-10)</title>
+
+    <link rel="import" href="components/myGauge.html"/>
+    <link rel="import" href="components/myGenerator.html"/>
+    <link rel="import" href="sensor/sensor.html"/>
+</head>
+<body>
+    <!--
+        Here is full example after rewriting our base code to WebComponent
+    -->
+
+    <my-gauge id="gauge-1" width="300px" height="300px" value="30" max-value="100" color="teal"></my-gauge>
+
+    <my-generator id="api"></my-generator>
+
+    <!--
+        Component below provide alternative data source
+        however it require Relayr Wunderbar device.
+        These keys won't work you have to use your own :(
+    -->
+    <!--
+    <my-sensor
+            id="api"
+            app-id="95f296ad-1fbc-4161-9f7b-878a72425b18"
+            token="3aBCW1MeKtSuF1AbhJLpwZzqoGr6oPF6"
+            device-id="955f3904-355f-483e-aee3-a841c3eca8f1">
+    </my-sensor>
+    -->
+
+    <script>
+        (function () {
+            var generator = document.getElementById('api');
+            var gauge1 = document.getElementById('gauge-1');
+
+            generator.addEventListener('update', function (e) {
+                gauge1.setAttribute('value', e.detail);
+
+                // Uncomment line below for using my-sensor element
+                // gauge1.setAttribute('value', e.detail['snd_level']);
+            }, false);
+        })();
+    </script>
+</body>
+</html>

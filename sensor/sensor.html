@@ -1,0 +1,45 @@
+<!--
+    This component provide a simple access to Relayr Wunderbar Cloud API
+    @see https://relayr.io/wunderbar
+-->
+<script src="relayr-browser-sdk.min.js"></script>
+<script>
+    (function (window, document) {
+        var MySensorPrototype = Object.create(HTMLElement.prototype);
+
+        MySensorPrototype.configuration = {};
+
+        MySensorPrototype.createdCallback = function () {
+            var self = this;
+
+            if (this.hasAttribute('token') && this.hasAttribute('app-id') && this.hasAttribute('device-id')) {
+                this.configuration.token = this.getAttribute('token');
+                this.configuration.appId = this.getAttribute('app-id');
+                this.configuration.deviceId = this.getAttribute('device-id');
+            }
+            else {
+                throw "Element require setting token, appId and deviceId attributes";
+            }
+
+            // @see https://developer.relayr.io/documents/WebDev/WebDevelopers
+            this.relayr = RELAYR.init({
+                appId: this.configuration.appId
+            });
+
+            this.relayr.devices().getDeviceData({
+                token: this.configuration.token,
+                deviceId: this.configuration.deviceId,
+                incomingData: function(data) {
+                    var e = new CustomEvent('update', {
+                        detail: data
+                    });
+                    self.dispatchEvent(e);
+                }
+            });
+        };
+
+        window.MySensor = document.registerElement('my-sensor', {
+            prototype: MySensorPrototype
+        });
+    })(window, document);
+</script>
