@@ -1,6 +1,6 @@
 # Introduction to WebComponents API's
 
-Code examples from Meet.js Łódź talk (live coding) that took place on 10th February 2015. Slides from presentation can be found [here](presentation.pdf).
+Code examples from Meet.js Łódź talk (live coding) that took place on 10th February 2015. Slides from presentation can be found [here](https://github.com/lrodziewicz/meetjs-introduction-to-webcomponents-apis/blob/master/presentation.pdf?raw=true).
 
 Event on [Meetup](http://www.meetup.com/meet-js-lodz/events/220109932/)
 
